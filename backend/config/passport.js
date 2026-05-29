@@ -13,7 +13,12 @@ passport.use(
       try {
         const email = profile.emails?.[0]?.value;
         if (!email) {
-          return done(new Error('Google profile does not contain an email address'), null);
+          return done(
+            new Error(
+              'Google profile does not contain an email address. Ensure the email scope is included in your OAuth configuration.'
+            ),
+            null
+          );
         }
         const googleId = profile.id;
 
@@ -82,6 +87,7 @@ passport.deserializeUser(async (id, done) => {
       [id]
     );
     if (result.rows.length === 0) {
+      console.warn(`User not found during session deserialization (user_id: ${id})`);
       return done(null, false);
     }
     done(null, result.rows[0]);

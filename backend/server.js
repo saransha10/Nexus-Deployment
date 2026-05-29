@@ -20,13 +20,19 @@ const hasDatabaseConfig =
   ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'].every(
     (name) => Boolean(process.env[name])
   );
+let sessionSecret = process.env.SESSION_SECRET;
 
 if (!hasDatabaseConfig) {
   missingEnvVars.push('DATABASE_URL or DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD');
 }
 
-if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
-  missingEnvVars.push('SESSION_SECRET');
+if (!sessionSecret) {
+  if (process.env.NODE_ENV === 'production') {
+    missingEnvVars.push('SESSION_SECRET');
+  } else {
+    sessionSecret = `${process.env.JWT_SECRET}-session`;
+    console.warn('SESSION_SECRET is not set. Using development fallback secret.');
+  }
 }
 
 if (missingEnvVars.length > 0) {
@@ -34,7 +40,6 @@ if (missingEnvVars.length > 0) {
   process.exit(1);
 }
 
-const sessionSecret = process.env.SESSION_SECRET || 'nexus-dev-session-secret';
 const passport = require('./config/passport');
 
 // Ensure temp upload directories exist (used before Cloudinary upload)
@@ -173,9 +178,13 @@ app.get('/health', (req, res) => {
 // Error handling
 app.use((err, req, res, next) => {
   console.error('Unhandled server error:', err);
+  const containsSensitiveData = /(password|secret|token|api[_-]?key|database_url|postgres(ql)?:\/\/)/i.test(err?.message || '');
   res.status(500).json({
     error: 'Something went wrong!',
-    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
+    message:
+      process.env.NODE_ENV === 'development' && !containsSensitiveData
+        ? err.message
+        : 'Internal server error',
   });
 });
 
