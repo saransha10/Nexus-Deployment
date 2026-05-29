@@ -1,5 +1,4 @@
 const { Pool } = require('pg');
-require('dotenv').config();
 
 // Support both Neon/production DATABASE_URL and local individual params
 const poolConfig = process.env.DATABASE_URL

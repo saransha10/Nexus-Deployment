@@ -11,7 +11,10 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        const email = profile.emails[0].value;
+        const email = profile.emails?.[0]?.value;
+        if (!email) {
+          return done(new Error('Google profile does not contain an email address'), null);
+        }
         const googleId = profile.id;
 
         // Check if user exists with this Google ID
@@ -78,6 +81,9 @@ passport.deserializeUser(async (id, done) => {
       'SELECT * FROM users WHERE user_id = $1',
       [id]
     );
+    if (result.rows.length === 0) {
+      return done(null, false);
+    }
     done(null, result.rows[0]);
   } catch (error) {
     done(error, null);

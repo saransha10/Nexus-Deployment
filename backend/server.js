@@ -1,11 +1,41 @@
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const session = require('express-session');
-const passport = require('./config/passport');
 const fs = require('fs');
-require('dotenv').config();
+
+const frontendOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+const requiredEnvVars = [
+  'JWT_SECRET',
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
+  'GOOGLE_CALLBACK_URL',
+];
+const missingEnvVars = requiredEnvVars.filter((name) => !process.env[name]);
+const hasDatabaseConfig =
+  Boolean(process.env.DATABASE_URL) ||
+  ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'].every(
+    (name) => Boolean(process.env[name])
+  );
+
+if (!hasDatabaseConfig) {
+  missingEnvVars.push('DATABASE_URL or DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD');
+}
+
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  missingEnvVars.push('SESSION_SECRET');
+}
+
+if (missingEnvVars.length > 0) {
+  console.error('Missing required environment variables:', missingEnvVars.join(', '));
+  process.exit(1);
+}
+
+const sessionSecret = process.env.SESSION_SECRET || 'nexus-dev-session-secret';
+const passport = require('./config/passport');
 
 // Ensure temp upload directories exist (used before Cloudinary upload)
 ['uploads/events', 'uploads/profiles'].forEach(dir => {
@@ -31,14 +61,14 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL,
+    origin: frontendOrigin,
     credentials: true,
   },
 });
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: frontendOrigin,
   credentials: true,
 }));
 app.use(express.json());
@@ -48,7 +78,7 @@ app.use('/uploads', express.static('uploads'));
 
 // Session configuration (required for passport)
 app.use(session({
-  secret: process.env.JWT_SECRET,
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -142,8 +172,11 @@ app.get('/health', (req, res) => {
 
 // Error handling
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+  console.error('Unhandled server error:', err);
+  res.status(500).json({
+    error: 'Something went wrong!',
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
+  });
 });
 
 const PORT = process.env.PORT || 5001;
