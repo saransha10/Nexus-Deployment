@@ -52,11 +52,12 @@ function PaymentGatewaySelector({ amount, productName, productId, ticketTypeId, 
 
       const paymentData = {
         amount: amount,
-        purchase_order_id: `ORDER_${productId}_${Date.now()}`,
+        // Encode productId and ticketTypeId into purchase_order_id so they survive the redirect
+        purchase_order_id: `ORDER_${productId}_${ticketTypeId}_${Date.now()}`,
         purchase_order_name: productName,
         ticket_type_id: ticketTypeId,
         customer_info: {
-          name: user?.full_name || 'Customer',
+          name: user?.full_name || user?.name || 'Customer',
           email: user?.email || 'customer@example.com',
           phone: user?.phone || '9800000000'
         }

@@ -58,7 +58,20 @@ function PaymentVerify() {
       }
 
       // Payment verified by backend - create ticket
-      const productId = localStorage.getItem('khalti_product_id');
+      let productId = localStorage.getItem('khalti_product_id');
+      let ticketTypeId = localStorage.getItem('khalti_ticket_type_id') || localStorage.getItem('selected_ticket_type');
+
+      // Fallback: extract from purchase_order_id in URL (format: ORDER_{productId}_{ticketTypeId}_{timestamp})
+      if (!productId && purchase_order_id) {
+        const parts = purchase_order_id.split('_');
+        // FORMAT: ORDER_{productId}_{ticketTypeId}_{timestamp}
+        if (parts.length >= 4) {
+          productId = parts[1];
+          ticketTypeId = ticketTypeId || parts[2];
+        } else if (parts.length >= 2) {
+          productId = parts[1];
+        }
+      }
 
       if (productId) {
         // Get stored quantity
@@ -66,7 +79,7 @@ function PaymentVerify() {
         
         // Register for event with payment data
         const response = await api.post(`/tickets/register/${productId}`, {
-          ticket_type_id: localStorage.getItem('khalti_ticket_type_id') || localStorage.getItem('selected_ticket_type'),
+          ticket_type_id: ticketTypeId,
           quantity: quantity, // Add quantity to payment verification
           payment_data: {
             pidx: pidx,
