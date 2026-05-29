@@ -139,7 +139,8 @@ function CreateEvent() {
       // Create FormData for multipart upload
       const eventFormData = new FormData();
       Object.keys(formData).forEach(key => {
-        if (formData[key]) {
+        if (formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
+          // For datetime fields, append as-is (local time string) to avoid UTC conversion
           eventFormData.append(key, formData[key]);
         }
       });

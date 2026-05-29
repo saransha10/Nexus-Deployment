@@ -183,7 +183,13 @@ const createEvent = async (req, res) => {
         location_name, location_address, location_lat, location_lng, 
         location_place_id, location_formatted_address, meeting_type, cloudinary_public_id
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+      VALUES ($1, $2, $3, 
+        $4::timestamp AT TIME ZONE 'Asia/Kathmandu',
+        $5::timestamp AT TIME ZONE 'Asia/Kathmandu',
+        $6, $7, $8, $9, $10, $11, $12,
+        $13::timestamp AT TIME ZONE 'Asia/Kathmandu',
+        $14::timestamp AT TIME ZONE 'Asia/Kathmandu',
+        $15, $16, $17, $18, $19, $20, $21, $22)
       RETURNING *`,
       [
         title, description, type, start_time, end_time,
