@@ -1,28 +1,28 @@
-const { Resend } = require('resend');
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+const SibApiV3Sdk = require('@getbrevo/brevo');
 
 // Send email
 const sendEmail = async (to, subject, html) => {
   try {
-    console.log('=== SENDING EMAIL via Resend ===');
-    console.log('From:', process.env.EMAIL_FROM || 'Nexus Events <onboarding@resend.dev>');
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+
+    const fromEmail = process.env.EMAIL_FROM_ADDRESS || 'keijitogashi69@gmail.com';
+    const fromName = process.env.EMAIL_FROM_NAME || 'Nexus Events';
+
+    console.log('=== SENDING EMAIL via Brevo ===');
+    console.log('From:', `${fromName} <${fromEmail}>`);
     console.log('To:', to);
     console.log('Subject:', subject);
 
-    const { data, error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'Nexus Events <onboarding@resend.dev>',
-      to,
-      subject,
-      html,
-    });
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+    sendSmtpEmail.subject = subject;
+    sendSmtpEmail.htmlContent = html;
+    sendSmtpEmail.sender = { name: fromName, email: fromEmail };
+    sendSmtpEmail.to = [{ email: to }];
 
-    if (error) {
-      throw new Error(error.message);
-    }
-
+    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
     console.log('✓ Email sent successfully!');
-    console.log('Message ID:', data.id);
+    console.log('Message ID:', data.body?.messageId);
     return data;
   } catch (error) {
     console.error('✗ EMAIL SENDING FAILED');
