@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -5,7 +7,6 @@ const cors = require('cors');
 const session = require('express-session');
 const passport = require('./config/passport');
 const fs = require('fs');
-require('dotenv').config();
 
 // Ensure temp upload directories exist (used before Cloudinary upload)
 ['uploads/events', 'uploads/profiles'].forEach(dir => {
