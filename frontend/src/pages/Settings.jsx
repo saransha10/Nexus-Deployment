@@ -101,10 +101,11 @@ function Settings() {
   const fetchProfileDetails = async () => {
     try {
       const response = await api.get('/profile');
-      // has_password is returned as boolean from backend
-      setUser(prev => ({ ...prev, has_password: response.data.password_hash }));
+      // password_hash is returned as boolean (true if set, false if not)
+      const hasPassword = response.data.password_hash === true;
+      setUser(prev => ({ ...prev, has_password: hasPassword }));
       const stored = JSON.parse(localStorage.getItem('user') || '{}');
-      localStorage.setItem('user', JSON.stringify({ ...stored, has_password: response.data.password_hash }));
+      localStorage.setItem('user', JSON.stringify({ ...stored, has_password: hasPassword }));
     } catch (error) {
       console.error('Failed to fetch profile details:', error);
     }
@@ -743,7 +744,7 @@ function Settings() {
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {user?.auth_provider === 'google' && !user?.has_password ? (
+                {user?.auth_provider === 'google' && user?.has_password === false ? (
                   // Google users without password — show Set Password form
                   <>
                     <Alert severity="info" sx={{ mb: 1 }}>
@@ -809,7 +810,7 @@ function Settings() {
               <Box sx={{ mt: 3 }}>
                 <Button
                   variant="contained"
-                  onClick={user?.auth_provider === 'google' && !user?.has_password ? handleSetPassword : handleChangePassword}
+                  onClick={user?.auth_provider === 'google' && user?.has_password === false ? handleSetPassword : handleChangePassword}
                   disabled={saving}
                   sx={{ 
                     bgcolor: '#0891b2',
@@ -817,7 +818,7 @@ function Settings() {
                     '&:hover': { bgcolor: '#0e7490' }
                   }}
                 >
-                  {saving ? 'Updating...' : user?.auth_provider === 'google' && !user?.has_password ? 'Set Password' : 'Update Password'}
+                  {saving ? 'Updating...' : user?.auth_provider === 'google' && user?.has_password === false ? 'Set Password' : 'Update Password'}
                 </Button>
               </Box>
             </Card>
