@@ -1,44 +1,32 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// Create transporter
-// Use port 465 (SSL) since port 587 (STARTTLS) is blocked on Render's free tier
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Send email
 const sendEmail = async (to, subject, html) => {
   try {
-    console.log('=== SENDING EMAIL ===');
-    console.log('From:', process.env.EMAIL_USER);
+    console.log('=== SENDING EMAIL via Resend ===');
+    console.log('From:', process.env.EMAIL_FROM || 'Nexus Events <onboarding@resend.dev>');
     console.log('To:', to);
     console.log('Subject:', subject);
-    
-    const mailOptions = {
-      from: `"Nexus Events" <${process.env.EMAIL_USER}>`,
+
+    const { data, error } = await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'Nexus Events <onboarding@resend.dev>',
       to,
       subject,
       html,
-    };
+    });
 
-    console.log('Calling transporter.sendMail...');
-    const info = await transporter.sendMail(mailOptions);
+    if (error) {
+      throw new Error(error.message);
+    }
+
     console.log('✓ Email sent successfully!');
-    console.log('Message ID:', info.messageId);
-    console.log('Response:', info.response);
-    return info;
+    console.log('Message ID:', data.id);
+    return data;
   } catch (error) {
     console.error('✗ EMAIL SENDING FAILED');
     console.error('Error message:', error.message);
-    console.error('Error code:', error.code);
-    console.error('Error command:', error.command);
-    console.error('Full error:', error);
     throw error;
   }
 };
