@@ -43,6 +43,12 @@ function PaymentVerify() {
       const purchase_order_id = searchParams.get('purchase_order_id');
       const error = searchParams.get('error');
 
+      // Debug: log all URL params
+      console.log('=== PaymentVerify URL params ===');
+      console.log('purchase_order_id:', purchase_order_id);
+      console.log('khalti_product_id from localStorage:', localStorage.getItem('khalti_product_id'));
+      console.log('khalti_ticket_type_id from localStorage:', localStorage.getItem('khalti_ticket_type_id'));
+
       // Check if payment failed
       if (urlStatus === 'failed') {
         setStatus('failed');
@@ -61,16 +67,24 @@ function PaymentVerify() {
       let productId = localStorage.getItem('khalti_product_id');
       let ticketTypeId = localStorage.getItem('khalti_ticket_type_id') || localStorage.getItem('selected_ticket_type');
 
-      // Fallback: extract from purchase_order_id in URL (format: ORDER_{productId}_{ticketTypeId}_{timestamp})
+      // Fallback: extract from purchase_order_id in URL
+      // Formats: ORDER_{productId}_{timestamp} or ORDER_{productId}_{ticketTypeId}_{timestamp}
       if (!productId && purchase_order_id) {
-        const parts = purchase_order_id.split('_');
-        // FORMAT: ORDER_{productId}_{ticketTypeId}_{timestamp}
-        if (parts.length >= 4) {
-          productId = parts[1];
-          ticketTypeId = ticketTypeId || parts[2];
-        } else if (parts.length >= 2) {
-          productId = parts[1];
+        console.log('localStorage empty, extracting from purchase_order_id:', purchase_order_id);
+        // Remove "ORDER_" prefix then split remaining by "_"
+        const withoutPrefix = purchase_order_id.replace(/^ORDER_/, '');
+        const parts = withoutPrefix.split('_');
+        console.log('parts after split:', parts);
+        
+        if (parts.length >= 3) {
+          // New format: {productId}_{ticketTypeId}_{timestamp}
+          productId = parts[0];
+          ticketTypeId = ticketTypeId || parts[1];
+        } else if (parts.length >= 1) {
+          // Old format: {productId}_{timestamp}
+          productId = parts[0];
         }
+        console.log('Extracted productId:', productId, 'ticketTypeId:', ticketTypeId);
       }
 
       if (productId) {
@@ -109,7 +123,7 @@ function PaymentVerify() {
         setTimeout(() => navigate('/my-tickets'), 3000);
       } else {
         setStatus('failed');
-        setMessage('Payment verified but ticket creation failed - missing product ID');
+        setMessage(`Payment verified but ticket creation failed - could not extract event ID from: ${purchase_order_id || 'missing'}`);
       }
 
     } catch (error) {
