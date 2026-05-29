@@ -1,0 +1,17 @@
+node_modules/
+.env
+*.log
+.DS_Store
+dist/
+build/
+
+# Admin credentials (keep secure)
+ADMIN_CREDENTIALS.txt
+backend/scripts/createAdmin.js
+
+# Local uploads — images are stored in Cloudinary in production
+backend/uploads/events/*
+backend/uploads/profiles/*
+# Keep the directories themselves
+!backend/uploads/events/.gitkeep
+!backend/uploads/profiles/.gitkeep
