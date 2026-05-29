@@ -6,7 +6,7 @@ const sendEmail = async (to, subject, html) => {
     const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
     apiInstance.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
-    const fromEmail = process.env.EMAIL_FROM_ADDRESS || 'keijitogashi69@gmail.com';
+    const fromEmail = process.env.EMAIL_FROM_ADDRESS || 'saransha004@gmail.com';
     const fromName = process.env.EMAIL_FROM_NAME || 'Nexus Events';
 
     console.log('=== SENDING EMAIL via Brevo ===');
