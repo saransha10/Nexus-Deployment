@@ -95,7 +95,20 @@ function Settings() {
       });
     }
     fetchPreferences();
+    fetchProfileDetails();
   }, []);
+
+  const fetchProfileDetails = async () => {
+    try {
+      const response = await api.get('/profile');
+      // has_password is returned as boolean from backend
+      setUser(prev => ({ ...prev, has_password: response.data.password_hash }));
+      const stored = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem('user', JSON.stringify({ ...stored, has_password: response.data.password_hash }));
+    } catch (error) {
+      console.error('Failed to fetch profile details:', error);
+    }
+  };
 
   const fetchPreferences = async () => {
     try {
@@ -171,6 +184,48 @@ function Settings() {
     setActiveTab(newValue);
     setSuccessMessage('');
     setErrorMessage('');
+  };
+
+  const handleSetPassword = async () => {
+    setSuccessMessage('');
+    setErrorMessage('');
+
+    if (!passwordData.newPassword || !passwordData.confirmPassword) {
+      setErrorMessage('All password fields are required');
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setErrorMessage('Passwords do not match');
+      return;
+    }
+
+    const validation = validatePassword(passwordData.newPassword);
+    if (!validation.isValid) {
+      setErrorMessage(validation.errors[0]);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await api.post('/profile/set-password', {
+        password: passwordData.newPassword,
+        confirmPassword: passwordData.confirmPassword
+      });
+
+      // Update user in localStorage to reflect has_password
+      const updatedUser = { ...user, has_password: true };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      setSuccessMessage('Password set successfully! You can now log in with email/password too.');
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setTimeout(() => setSuccessMessage(''), 4000);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || 'Failed to set password');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -688,41 +743,73 @@ function Settings() {
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box>
-                  <PasswordField
-                    label="Current Password"
-                    fullWidth
-                    size="small"
-                    value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  />
-                </Box>
-                <Box>
-                  <PasswordField
-                    label="New Password"
-                    fullWidth
-                    size="small"
-                    showStrength={true}
-                    showRequirements={true}
-                    value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                  />
-                </Box>
-                <Box>
-                  <PasswordField
-                    label="Confirm New Password"
-                    fullWidth
-                    size="small"
-                    value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                  />
-                </Box>
+                {user?.auth_provider === 'google' && !user?.has_password ? (
+                  // Google users without password — show Set Password form
+                  <>
+                    <Alert severity="info" sx={{ mb: 1 }}>
+                      You signed in with Google. Set a password to also log in with email/password.
+                    </Alert>
+                    <Box>
+                      <PasswordField
+                        label="New Password"
+                        fullWidth
+                        size="small"
+                        showStrength={true}
+                        showRequirements={true}
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                      />
+                    </Box>
+                    <Box>
+                      <PasswordField
+                        label="Confirm Password"
+                        fullWidth
+                        size="small"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                      />
+                    </Box>
+                  </>
+                ) : (
+                  // Local users or Google users who already have a password
+                  <>
+                    <Box>
+                      <PasswordField
+                        label="Current Password"
+                        fullWidth
+                        size="small"
+                        value={passwordData.currentPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                      />
+                    </Box>
+                    <Box>
+                      <PasswordField
+                        label="New Password"
+                        fullWidth
+                        size="small"
+                        showStrength={true}
+                        showRequirements={true}
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                      />
+                    </Box>
+                    <Box>
+                      <PasswordField
+                        label="Confirm New Password"
+                        fullWidth
+                        size="small"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                      />
+                    </Box>
+                  </>
+                )}
               </Box>
 
               <Box sx={{ mt: 3 }}>
                 <Button
                   variant="contained"
-                  onClick={handleChangePassword}
+                  onClick={user?.auth_provider === 'google' && !user?.has_password ? handleSetPassword : handleChangePassword}
                   disabled={saving}
                   sx={{ 
                     bgcolor: '#0891b2',
@@ -730,7 +817,7 @@ function Settings() {
                     '&:hover': { bgcolor: '#0e7490' }
                   }}
                 >
-                  {saving ? 'Updating...' : 'Update Password'}
+                  {saving ? 'Updating...' : user?.auth_provider === 'google' && !user?.has_password ? 'Set Password' : 'Update Password'}
                 </Button>
               </Box>
             </Card>
