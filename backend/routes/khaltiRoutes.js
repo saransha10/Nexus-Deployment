@@ -97,7 +97,8 @@ router.post('/initiate', authenticate, async (req, res) => {
 // Khalti Callback (NO AUTHENTICATION - Khalti redirects user here)
 router.get('/callback', async (req, res) => {
   try {
-    const { pidx } = req.query;
+    // Khalti sends these in the callback URL query params
+    const { pidx, purchase_order_id, purchase_order_name } = req.query;
 
     console.log('Khalti callback received:', req.query);
 
@@ -129,14 +130,18 @@ router.get('/callback', async (req, res) => {
         );
       }
 
+      // Use purchase_order_id from callback query params (more reliable than lookup response)
+      const orderId = purchase_order_id || response.data.purchase_order_id;
+      const orderName = purchase_order_name || response.data.purchase_order_name;
+
       // Payment verified successfully - redirect to frontend with success data
       const successParams = new URLSearchParams({
         status: 'success',
         pidx: pidx,
         transaction_id: response.data.transaction_id,
-        amount: (response.data.total_amount / 100).toFixed(2), // Convert paisa to rupees
-        purchase_order_id: response.data.purchase_order_id,
-        purchase_order_name: response.data.purchase_order_name
+        amount: (response.data.total_amount / 100).toFixed(2),
+        purchase_order_id: orderId || '',
+        purchase_order_name: orderName || ''
       });
 
       return res.redirect(`${process.env.FRONTEND_URL}/payment/verify?${successParams.toString()}`);
