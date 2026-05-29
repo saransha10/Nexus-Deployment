@@ -77,6 +77,8 @@ function Settings() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
+  const [isGoogleWithoutPassword, setIsGoogleWithoutPassword] = useState(false);
+
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
@@ -101,8 +103,9 @@ function Settings() {
   const fetchProfileDetails = async () => {
     try {
       const response = await api.get('/profile');
-      // password_hash is returned as boolean (true if set, false if not)
       const hasPassword = response.data.password_hash === true;
+      const isGoogle = response.data.auth_provider === 'google';
+      setIsGoogleWithoutPassword(isGoogle && !hasPassword);
       setUser(prev => ({ ...prev, has_password: hasPassword }));
       const stored = JSON.parse(localStorage.getItem('user') || '{}');
       localStorage.setItem('user', JSON.stringify({ ...stored, has_password: hasPassword }));
@@ -217,6 +220,7 @@ function Settings() {
       // Update user in localStorage to reflect has_password
       const updatedUser = { ...user, has_password: true };
       setUser(updatedUser);
+      setIsGoogleWithoutPassword(false);
       localStorage.setItem('user', JSON.stringify(updatedUser));
 
       setSuccessMessage('Password set successfully! You can now log in with email/password too.');
@@ -744,7 +748,7 @@ function Settings() {
               </Box>
 
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {user?.auth_provider === 'google' && user?.has_password === false ? (
+                {isGoogleWithoutPassword ? (
                   // Google users without password — show Set Password form
                   <>
                     <Alert severity="info" sx={{ mb: 1 }}>
@@ -810,7 +814,7 @@ function Settings() {
               <Box sx={{ mt: 3 }}>
                 <Button
                   variant="contained"
-                  onClick={user?.auth_provider === 'google' && user?.has_password === false ? handleSetPassword : handleChangePassword}
+                  onClick={isGoogleWithoutPassword ? handleSetPassword : handleChangePassword}
                   disabled={saving}
                   sx={{ 
                     bgcolor: '#0891b2',
@@ -818,7 +822,7 @@ function Settings() {
                     '&:hover': { bgcolor: '#0e7490' }
                   }}
                 >
-                  {saving ? 'Updating...' : user?.auth_provider === 'google' && user?.has_password === false ? 'Set Password' : 'Update Password'}
+                  {saving ? 'Updating...' : isGoogleWithoutPassword ? 'Set Password' : 'Update Password'}
                 </Button>
               </Box>
             </Card>
