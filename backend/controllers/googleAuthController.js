@@ -52,7 +52,7 @@ const googleCallback = (req, res) => {
 const updateRole = async (req, res) => {
   try {
     const { role } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user.user_id;
 
     if (!role || !['attendee', 'organizer'].includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
