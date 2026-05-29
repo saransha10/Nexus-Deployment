@@ -5,6 +5,8 @@ services:
     buildCommand: npm install
     startCommand: node server.js
     envVars:
+      - key: BACKEND_URL
+        value: https://nexus-event-management-web.onrender.com
       - key: NODE_ENV
         value: production
       - key: PORT
