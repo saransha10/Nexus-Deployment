@@ -81,25 +81,20 @@ const Dashboard = () => {
       let eventsCreated = 0;
       let totalAttendees = 0;
       
-      // If user is organizer, fetch their events
+      // If user is organizer, fetch their events directly (includes pending/unapproved)
       if (userData && userData.role === 'organizer') {
-        const organizerEvents = allEvents.filter(event => event.organizer_id === userData.user_id);
-        eventsCreated = organizerEvents.length;
-        
-        // Calculate total attendees across all their events
-        for (const event of organizerEvents) {
-          try {
-            const ticketTypesResponse = await api.get(`/ticket-types/event/${event.event_id}`);
-            const ticketTypes = ticketTypesResponse.data;
-            
-            // Sum up sold tickets (quantity_available - remaining)
-            ticketTypes.forEach(type => {
-              const sold = (type.quantity_available || 0) - (type.remaining || 0);
-              totalAttendees += sold;
-            });
-          } catch (error) {
-            console.error('Failed to fetch ticket types for event:', event.event_id);
-          }
+        try {
+          const organizerEventsResponse = await api.get('/events/organizer/my-events');
+          const organizerEvents = organizerEventsResponse.data;
+          eventsCreated = organizerEvents.length;
+
+          // Sum up sold tickets across all their events
+          organizerEvents.forEach(event => {
+            const sold = parseInt(event.attendee_count) || 0;
+            totalAttendees += sold;
+          });
+        } catch (error) {
+          console.error('Failed to fetch organizer events:', error);
         }
       }
       
