@@ -88,9 +88,10 @@ const sendRegistrationConfirmationEmail = async (email, userName, eventDetails, 
   console.log('Event:', eventDetails.title);
   console.log('Ticket:', ticketDetails.type_name);
   
-  // Check if event has external meeting link
-  const hasExternalMeeting = eventDetails.meeting_type === 'external' && eventDetails.streaming_url;
-  const hasBuiltinMeeting = eventDetails.meeting_type === 'builtin' || eventDetails.meeting_type === 'jitsi';
+  // Check if event has external meeting link (only for online/hybrid events)
+  const isOnlineEvent = eventDetails.type === 'online' || eventDetails.type === 'hybrid';
+  const hasExternalMeeting = isOnlineEvent && eventDetails.meeting_type === 'external' && eventDetails.streaming_url;
+  const hasBuiltinMeeting = isOnlineEvent && (eventDetails.meeting_type === 'builtin' || eventDetails.meeting_type === 'jitsi');
   
   const html = `
     <!DOCTYPE html>
