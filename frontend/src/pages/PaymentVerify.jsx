@@ -1,5 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Box, Typography, Button, CircularProgress } from '@mui/material';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import api from '../services/api';
 
 function PaymentVerify() {
@@ -134,170 +137,155 @@ function PaymentVerify() {
   };
 
   return (
-    <div className="payment-verify-page">
-      <div className="verify-container">
-        {status === 'verifying' && (
-          <div className="verify-status verifying">
-            <div className="spinner"></div>
-            <h2>Verifying Payment</h2>
-            <p>{message}</p>
-          </div>
-        )}
+    <Box sx={{
+      minHeight: '100vh',
+      bgcolor: '#f9fafb',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      p: 3,
+    }}>
+      <Box sx={{ maxWidth: 480, width: '100%' }}>
+        {/* Logo */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 4, justifyContent: 'center' }}>
+          <Box sx={{
+            width: 40, height: 40, borderRadius: '50%',
+            background: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Box sx={{
+              width: 22, height: 22, borderRadius: '50%',
+              border: '2.5px solid white', borderTopColor: 'transparent',
+              transform: 'rotate(-45deg)',
+            }} />
+          </Box>
+          <Typography sx={{
+            fontWeight: 700, fontSize: '1.25rem',
+            background: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>
+            NEXUS
+          </Typography>
+        </Box>
 
-        {status === 'success' && (
-          <div className="verify-status success">
-            <div className="success-icon">✓</div>
-            <h2>Payment Successful!</h2>
-            <p>{message}</p>
-            {details && (
-              <div className="payment-details">
-                <p><strong>Transaction ID:</strong> {details.transaction_id}</p>
-                <p><strong>Amount:</strong> Rs. {details.total_amount / 100}</p>
-              </div>
-            )}
-            <p className="redirect-message">Redirecting to My Tickets...</p>
-          </div>
-        )}
+        <Box sx={{
+          bgcolor: 'white',
+          border: '1px solid #e5e7eb',
+          borderRadius: 3,
+          p: 5,
+          textAlign: 'center',
+        }}>
+          {status === 'verifying' && (
+            <>
+              <Box sx={{
+                width: 72, height: 72, borderRadius: '50%',
+                bgcolor: '#f0fdfa', border: '2px solid #0891b2',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                mx: 'auto', mb: 3,
+              }}>
+                <CircularProgress size={36} sx={{ color: '#0891b2' }} />
+              </Box>
+              <Typography variant="h5" sx={{ fontWeight: 600, color: '#1f2937', mb: 1 }}>
+                Verifying Payment
+              </Typography>
+              <Typography sx={{ color: '#6b7280' }}>
+                Please wait while we confirm your transaction...
+              </Typography>
+            </>
+          )}
 
-        {status === 'failed' && (
-          <div className="verify-status failed">
-            <div className="error-icon">✕</div>
-            <h2>Payment Failed</h2>
-            <p>{message}</p>
-            <button onClick={() => navigate('/events')} className="btn-back">
-              Back to Events
-            </button>
-          </div>
-        )}
-      </div>
+          {status === 'success' && (
+            <>
+              <Box sx={{
+                width: 72, height: 72, borderRadius: '50%',
+                bgcolor: '#d1fae5',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                mx: 'auto', mb: 3,
+                animation: 'scaleIn 0.4s ease-out',
+                '@keyframes scaleIn': {
+                  '0%': { transform: 'scale(0)' },
+                  '60%': { transform: 'scale(1.1)' },
+                  '100%': { transform: 'scale(1)' },
+                },
+              }}>
+                <CheckCircleOutlineIcon sx={{ fontSize: 40, color: '#10b981' }} />
+              </Box>
+              <Typography variant="h5" sx={{ fontWeight: 600, color: '#1f2937', mb: 1 }}>
+                Payment Successful
+              </Typography>
+              <Typography sx={{ color: '#6b7280', mb: 3 }}>
+                {message}
+              </Typography>
 
-      <style>{`
-        .payment-verify-page {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          padding: 2rem;
-        }
+              {details && (
+                <Box sx={{
+                  bgcolor: '#f9fafb', border: '1px solid #e5e7eb',
+                  borderRadius: 2, p: 2.5, mb: 3, textAlign: 'left',
+                }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography sx={{ fontSize: '0.875rem', color: '#6b7280' }}>Transaction ID</Typography>
+                    <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#1f2937', fontFamily: 'monospace' }}>
+                      {details.transaction_id}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography sx={{ fontSize: '0.875rem', color: '#6b7280' }}>Amount Paid</Typography>
+                    <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#10b981' }}>
+                      Rs. {details.total_amount / 100}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
 
-        .verify-container {
-          background: white;
-          border-radius: 16px;
-          padding: 3rem;
-          max-width: 500px;
-          width: 100%;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
+              <Typography sx={{ fontSize: '0.875rem', color: '#0891b2', fontWeight: 500 }}>
+                Redirecting to My Tickets...
+              </Typography>
+            </>
+          )}
 
-        .verify-status {
-          text-align: center;
-        }
-
-        .spinner {
-          width: 60px;
-          height: 60px;
-          border: 4px solid #f3f3f3;
-          border-top: 4px solid #667eea;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-          margin: 0 auto 1.5rem;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        .success-icon {
-          width: 80px;
-          height: 80px;
-          background: #4caf50;
-          color: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 3rem;
-          margin: 0 auto 1.5rem;
-          animation: scaleIn 0.5s ease-out;
-        }
-
-        .error-icon {
-          width: 80px;
-          height: 80px;
-          background: #f44336;
-          color: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 3rem;
-          margin: 0 auto 1.5rem;
-          animation: scaleIn 0.5s ease-out;
-        }
-
-        @keyframes scaleIn {
-          0% { transform: scale(0); }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); }
-        }
-
-        .verify-status h2 {
-          margin: 0 0 1rem 0;
-          color: #333;
-          font-size: 1.8rem;
-        }
-
-        .verify-status p {
-          color: #666;
-          margin: 0.5rem 0;
-          font-size: 1.1rem;
-        }
-
-        .payment-details {
-          background: #f5f5f5;
-          padding: 1.5rem;
-          border-radius: 8px;
-          margin: 1.5rem 0;
-          text-align: left;
-        }
-
-        .payment-details p {
-          margin: 0.5rem 0;
-          color: #333;
-          font-size: 0.95rem;
-        }
-
-        .redirect-message {
-          color: #667eea;
-          font-weight: 500;
-          margin-top: 1.5rem;
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-
-        .btn-back {
-          margin-top: 1.5rem;
-          padding: 0.75rem 2rem;
-          background: #667eea;
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 1rem;
-          cursor: pointer;
-          transition: background 0.3s;
-        }
-
-        .btn-back:hover {
-          background: #5568d3;
-        }
-      `}</style>
-    </div>
+          {status === 'failed' && (
+            <>
+              <Box sx={{
+                width: 72, height: 72, borderRadius: '50%',
+                bgcolor: '#fee2e2',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                mx: 'auto', mb: 3,
+              }}>
+                <ErrorOutlineIcon sx={{ fontSize: 40, color: '#ef4444' }} />
+              </Box>
+              <Typography variant="h5" sx={{ fontWeight: 600, color: '#1f2937', mb: 1 }}>
+                Payment Failed
+              </Typography>
+              <Typography sx={{ color: '#6b7280', mb: 4 }}>
+                {message}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate(-1)}
+                  sx={{
+                    textTransform: 'none', borderColor: '#d1d5db', color: '#6b7280',
+                    '&:hover': { borderColor: '#9ca3af', bgcolor: '#f9fafb' },
+                  }}
+                >
+                  Go Back
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => navigate('/events')}
+                  sx={{
+                    textTransform: 'none', bgcolor: '#0891b2', boxShadow: 'none',
+                    '&:hover': { bgcolor: '#0e7490', boxShadow: 'none' },
+                  }}
+                >
+                  Browse Events
+                </Button>
+              </Box>
+            </>
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
